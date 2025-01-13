@@ -2,7 +2,7 @@
 import csv
 import json
 import os.path
-from typing import List, Tuple, Union, Dict
+from typing import Dict, List, Tuple, Union
 
 import about
 import chardet
@@ -115,8 +115,9 @@ class CIE(CIE):
         Ch_ab = self.chs(lab)[0:2]
         Ch_ab_h = self.chs(hlab)[0:2]
         Chs_uv = self.chs(luv)
+        
         return vstack((XYZ, xyz, lab, Ch_ab, hlab, Ch_ab_h, self.rgb16(rgb, 1),
-                       uv_, 1 - uv_.sum(axis=0), luv, Chs_uv))
+                       uv_, 1 - uv_.sum(axis=0), luv, Chs_uv, 100*(1.28*XYZ[0]-1.06*XYZ[2])/XYZ[1]))
 
 
 def _line_h(parent):
@@ -138,14 +139,14 @@ def save_setting(setting):
         json.dump(setting, fp, ensure_ascii=False)
 
 
-CHECKBOX_TITLE = ('X', 'Y', 'Z', 'x', 'y', 'z', 'CIELAB-L*', 'CIELAB-a*',
+CHECKBOX_TITLE = ['X', 'Y', 'Z', 'x', 'y', 'z', 'CIELAB-L*', 'CIELAB-a*',
                   'CIELAB-b*', 'CIELAB-C*_ab', 'CIELAB-h_ab', 'Hunter L',
                   'Hunter a', 'Hunter b', 'Hunter C_ab', 'Hunter h_ab', 'sRGB',
                   'u\'', 'v\'', 'w\'', 'CIELUV-L*', 'CIELUV-u*', 'CIELUV-v*',
-                  'CIELUV-C*_uv', 'CIELUV-h_uv', 'CIELUV-s_uv')
-CHECKBOX_LABEL = ('X', 'Y', 'Z', 'x', 'y', 'z', 'L*', 'a*', 'b*', 'C*_ab',
+                  'CIELUV-C*_uv', 'CIELUV-h_uv', 'CIELUV-s_uv']
+CHECKBOX_LABEL = ['X', 'Y', 'Z', 'x', 'y', 'z', 'L*', 'a*', 'b*', 'C*_ab',
                  'h_ab', 'L', 'a', 'b', 'C_ab', 'h_ab', 'sRGB', 'u\'', 'v\'',
-                 'w\'', 'L*', 'u*', 'v*', 'C*_uv', 'h_uv', 's_uv')
+                 'w\'', 'L*', 'u*', 'v*', 'C*_uv', 'h_uv', 's_uv']
 # CHECKBOX_BOOL = (True, True, True, False, False, False, True, True, True,
 #                  False, False, False, False, False, False, False, True, False,
 #                  False, False, False, False, False, False, False, False)
@@ -175,12 +176,15 @@ class CalcItems(wx.Dialog):
         self.btn231 = wx.Button(self, label='确定')
         self.btn232 = wx.Button(self, label='取消')
 
-        self.checkBoxs = {k: wx.CheckBox(self, label=l) for k, l in CHECKBOX_DICT.items()}
+        self.checkBoxs = {
+            k: wx.CheckBox(self, label=l)
+            for k, l in CHECKBOX_DICT.items()
+        }
         if self._c:
             self.cb_yi = wx.CheckBox(self, label='YI')
             self.cb_yi.SetValue(self.setting['YI'])
-        for k in CHECKBOX_TITLE:
-            self.checkBoxs[k].SetValue(self.setting[k])
+        for k, v in self.checkBoxs.items():
+            v.SetValue(self.setting[k])
         self._set_font()
         self._laypout_0()
 
@@ -193,7 +197,7 @@ class CalcItems(wx.Dialog):
             b: bool = v.GetValue()
             self.setting[k] = b
             self.result[k] = b
-        
+
         b = self.cb_yi.GetValue() if self._c else False
         self.setting['YI'] = b
         self.result['YI'] = b
@@ -209,7 +213,9 @@ class CalcItems(wx.Dialog):
         layout11 = wx.BoxSizer(wx.VERTICAL)
         layout11.Add(_line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
-        for lab, cb_t in zip((self.lab3, self.lab6, self.lab17), (('X', 'Y', 'Z'), ('x', 'y', 'z'), ('u\'', 'v\'', 'w\''))):
+        for lab, cb_t in zip(
+            (self.lab3, self.lab6, self.lab17),
+            (('X', 'Y', 'Z'), ('x', 'y', 'z'), ('u\'', 'v\'', 'w\''))):
             layout10.Add(lab, 0, wx.ALL, 3)
             layout = wx.BoxSizer(wx.HORIZONTAL)
             for i in cb_t:
@@ -247,7 +253,7 @@ class CalcItems(wx.Dialog):
             layout.Add(self.cb_yi, 0, wx.ALL, 3)
             layout0.Add(layout, 0, wx.ALL)
         else:
-            layout0.Add(self.cb15, 0, wx.ALL, 3)
+            layout0.Add(self.checkBoxs['sRGB'], 0, wx.ALL, 3)
         layout0.Add(_line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
         layout1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -405,7 +411,7 @@ class ReadFileData(wx.Dialog):
             ind2 = self.cb3_11.GetStringSelection()  # 读取Excel的sheetname
             ind3 = int(self.sc3_12.GetValue()) - 1  # 读取Excel的第几列
             ind1_0 = None if ind1 == 0 else ind1 - 1
-            if self._suffix in ('csv', 'txt'):
+            if self._suffix in ('csv', 'txt', 'tsv'):
                 spe, hea = read_txt(self._path, ind1_0, slice(ind3, None))
 
             elif self._suffix == 'xlsx':
@@ -414,18 +420,21 @@ class ReadFileData(wx.Dialog):
                 spe: List[List[str]] = list(
                     map(list,
                         ws1.iter_rows(min_row=ind1,
-                                     min_col=ind3 + 1,
-                                     values_only=True)))
+                                      min_col=ind3 + 1,
+                                      values_only=True)))
 
                 if ind1_0 is not None:
                     hea = spe.pop(0)
 
             else:
-                wb2: xlrd.book.Book= xlrd.open_workbook(self._path)
+                wb2: xlrd.book.Book = xlrd.open_workbook(self._path)
                 ws2 = wb2.sheet_by_name(ind2)
                 if ind1_0 is not None:
                     hea = ws2.row_values(ind1_0, start_colx=ind3)
-                spe = [ws2.row_values(i, start_colx=ind3) for i in range(ind1, ws2.nrows)]
+                spe = [
+                    ws2.row_values(i, start_colx=ind3)
+                    for i in range(ind1, ws2.nrows)
+                ]
 
             if ind1_0 is None:
                 hea = ['波长'] + [f'Data{i}' for i in range(1, len(spe[0]))]
@@ -451,7 +460,6 @@ class W2C(wx.Panel):
         self.SetBackgroundColour(wx.Colour(245, 245, 245))
         # self.SetSize((800, 500))
         # self.SetMinSize((680, 235))
-
         self._init_ui()
         self._set_bind()
         self.Centre()
@@ -473,9 +481,8 @@ class W2C(wx.Panel):
         # layout02
         self.lab_0r0 = wx.StaticText(self, label='输出')
         self.lab_0r10 = wx.StaticText(self, label='光源参数: ')
-        self.cb_0r11 = wx.Choice(self,
-                                 choices=('A', 'D65', 'C', 'D50', 'D55',
-                                          'D65'))
+        self.cb_0r11 = wx.Choice(self, choices=('A', 'D65', 'C', 
+                                                'D50', 'D55', 'D65'))
         self.cb_0r11.SetSelection(1)
         self.cb_0r12 = wx.Choice(self, choices=('2°', '10°'))
         self.cb_0r12.SetSelection(0)
@@ -491,7 +498,6 @@ class W2C(wx.Panel):
         self.btn_0r41 = wx.Button(self, label='导 出')
 
         self._set_font()
-
         self.layout00 = wx.BoxSizer(wx.HORIZONTAL)
         self.layout01 = wx.BoxSizer(wx.VERTICAL)
         self.layout02 = wx.BoxSizer(wx.VERTICAL)
@@ -596,9 +602,9 @@ class W2C(wx.Panel):
         # 选择文件
         try:
             setting = get_setting()
-            wildcard = 'Data file (*.xlsx;*.xls;*.csv;*.txt;*.pdf)|*.xlsx;*.xls;*.csv;*.txt;*.pdf|\
+            wildcard = 'Data file (*.xlsx;*.xls;*.csv;*.txt;*.tsv;*.pdf)|*.xlsx;*.xls;*.csv;*.txt;*.tsv;*.pdf|\
 Excel files (*.xlsx;*.xls)|*.xlsx;*.xls|\
-CSV files (*.csv;*.txt)|*.csv;*.txt|PDF file (*.pdf)|*.pdf'
+CSV files (*.csv;*.txt;*.tsv)|*.csv;*.txt;*.tsv|PDF file (*.pdf)|*.pdf'
             fileDialog = wx.FileDialog(self,
                                        '选择数据文件',
                                        defaultDir=setting['open_path'],

@@ -7,7 +7,7 @@ import wxHueTrans
 class MainWin(wx.Frame):
     def __init__(self):
         super(MainWin, self).__init__(None, size=(1010, 600), 
-                                      title='色度计算和转换v4.1 —— 洪溢凡,2024.5.29')
+                                      title='色度计算和转换v4.2 —— 洪溢凡,2025.1.12')
         # self.SetBackgroundColour(wx.Colour(245, 245, 245))
 
         self.SetMinSize((1000, 430))

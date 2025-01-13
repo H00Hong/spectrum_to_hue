@@ -83,8 +83,8 @@ class CalcItems(wx.Dialog):
         if self._c:
             self.cb_yi = wx.CheckBox(self, label='YI')
             self.cb_yi.SetValue(self.setting['YI'])
-        for k in CHECKBOX_TITLE:
-            self.checkBoxs[k].SetValue(self.setting[k])
+        for k, v in self.checkBoxs.items():
+            v.SetValue(self.setting[k])
         self._set_font()
         self._laypout_0()
 
@@ -153,7 +153,7 @@ class CalcItems(wx.Dialog):
             layout.Add(self.cb_yi, 0, wx.ALL, 3)
             layout0.Add(layout, 0, wx.ALL)
         else:
-            layout0.Add(self.cb15, 0, wx.ALL, 3)
+            layout0.Add(self.checkBoxs['sRGB'], 0, wx.ALL, 3)
         layout0.Add(_line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
         layout1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -185,5 +185,5 @@ class CalcItems(wx.Dialog):
 if __name__ == '__main__':
     app = wx.App()
     frame = CalcItems(None, True)
-    frame.Show()
+    frame.ShowModal()
     app.MainLoop()
