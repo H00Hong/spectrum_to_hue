@@ -100,7 +100,7 @@ def read_pdf(path: str, data_ye: int = 0) -> List[List[str]]:
 
 class CIE(CIE):
 
-    def yanse(self):
+    def colour(self):
         XYZ = self.spe2xyz()
         if XYZ.ndim == 1:
             XYZ = XYZ.reshape((3, 1))
@@ -115,9 +115,9 @@ class CIE(CIE):
         Ch_ab = self.chs(lab)[0:2]
         Ch_ab_h = self.chs(hlab)[0:2]
         Chs_uv = self.chs(luv)
-        
+        yi = 100*(1.28*XYZ[0]-1.06*XYZ[2])/XYZ[1]
         return vstack((XYZ, xyz, lab, Ch_ab, hlab, Ch_ab_h, self.rgb16(rgb, 1),
-                       uv_, 1 - uv_.sum(axis=0), luv, Chs_uv, 100*(1.28*XYZ[0]-1.06*XYZ[2])/XYZ[1]))
+                       uv_, 1 - uv_.sum(axis=0), luv, Chs_uv, yi))
 
 
 def _line_h(parent):
@@ -129,13 +129,17 @@ def _line_v(parent):
 
 
 def get_setting() -> Dict[str, Union[str, int, bool]]:
-    with open(os.path.dirname(__file__)+'/_setting.json', 'r', encoding='utf-8') as fp:
+    with open(os.path.dirname(__file__) + '/_setting.json',
+              'r',
+              encoding='utf-8') as fp:
         setting = json.load(fp)
     return setting
 
 
 def save_setting(setting):
-    with open(os.path.dirname(__file__)+'/_setting.json', 'w', encoding='utf-8') as fp:
+    with open(os.path.dirname(__file__) + '/_setting.json',
+              'w',
+              encoding='utf-8') as fp:
         json.dump(setting, fp, ensure_ascii=False)
 
 
@@ -169,21 +173,19 @@ class CalcItems(wx.Dialog):
         self.lab6 = wx.StaticText(self, label='CIE xyz')
         self.lab9 = wx.StaticText(self, label='CIELAB')
         self.lab12 = wx.StaticText(self, label='Hunter Lab')
-        self.cb15 = wx.CheckBox(self, label='sRGB')
         self.lab17 = wx.StaticText(self, label='CIE u\'v\'w\'')
         self.lab20 = wx.StaticText(self, label='CIELUV')
-        self.lab230 = wx.StaticText(self, label='')
         self.btn231 = wx.Button(self, label='确定')
         self.btn232 = wx.Button(self, label='取消')
 
-        self.checkBoxs = {
+        self.check_boxs = {
             k: wx.CheckBox(self, label=l)
             for k, l in CHECKBOX_DICT.items()
         }
         if self._c:
             self.cb_yi = wx.CheckBox(self, label='YI')
             self.cb_yi.SetValue(self.setting['YI'])
-        for k, v in self.checkBoxs.items():
+        for k, v in self.check_boxs.items():
             v.SetValue(self.setting[k])
         self._set_font()
         self._laypout_0()
@@ -193,7 +195,7 @@ class CalcItems(wx.Dialog):
 
     def _on_ok(self, event):
         self.result: Dict[str, bool] = {}
-        for k, v in self.checkBoxs.items():
+        for k, v in self.check_boxs.items():
             b: bool = v.GetValue()
             self.setting[k] = b
             self.result[k] = b
@@ -219,7 +221,7 @@ class CalcItems(wx.Dialog):
             layout10.Add(lab, 0, wx.ALL, 3)
             layout = wx.BoxSizer(wx.HORIZONTAL)
             for i in cb_t:
-                layout.Add(self.checkBoxs[i], 1, wx.ALL | wx.EXPAND, 3)
+                layout.Add(self.check_boxs[i], 1, wx.ALL | wx.EXPAND, 3)
             layout10.Add(layout, 1, wx.EXPAND | wx.ALL, 3)
             layout10.Add(_line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
@@ -233,7 +235,7 @@ class CalcItems(wx.Dialog):
             layout11.Add(lab, 0, wx.ALL, 3)
             layout = wx.GridSizer(0, 3, 0, 0)
             for i in cb_t:
-                layout.Add(self.checkBoxs[i], 1, wx.ALL, 3)
+                layout.Add(self.check_boxs[i], 1, wx.ALL, 3)
             layout11.Add(layout, 1, wx.EXPAND | wx.ALL, 3)
             layout11.Add(_line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
@@ -249,15 +251,15 @@ class CalcItems(wx.Dialog):
 
         if self._c:
             layout = wx.BoxSizer(wx.HORIZONTAL)
-            layout.Add(self.checkBoxs['sRGB'], 0, wx.ALL, 3)
+            layout.Add(self.check_boxs['sRGB'], 0, wx.ALL, 3)
             layout.Add(self.cb_yi, 0, wx.ALL, 3)
             layout0.Add(layout, 0, wx.ALL)
         else:
-            layout0.Add(self.checkBoxs['sRGB'], 0, wx.ALL, 3)
+            layout0.Add(self.check_boxs['sRGB'], 0, wx.ALL, 3)
         layout0.Add(_line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
         layout1 = wx.BoxSizer(wx.HORIZONTAL)
-        layout1.Add(self.lab230, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
+        layout1.Add(wx.StaticText(self), 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
         layout1.Add(self.btn231, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
         layout1.Add(self.btn232, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
         layout0.Add(layout1, 0, wx.EXPAND | wx.ALL, 3)
@@ -274,7 +276,7 @@ class CalcItems(wx.Dialog):
         self.lab12.SetFont(FONT0)
         self.lab17.SetFont(FONT0)
         self.lab20.SetFont(FONT0)
-        for v in self.checkBoxs.values():
+        for v in self.check_boxs.values():
             v.SetFont(FONT0)
         self.btn231.SetFont(FONT0)
         self.btn232.SetFont(FONT0)
@@ -481,7 +483,7 @@ class W2C(wx.Panel):
         # layout02
         self.lab_0r0 = wx.StaticText(self, label='输出')
         self.lab_0r10 = wx.StaticText(self, label='光源参数: ')
-        self.cb_0r11 = wx.Choice(self, choices=('A', 'D65', 'C', 
+        self.cb_0r11 = wx.Choice(self, choices=('A', 'D65', 'C',
                                                 'D50', 'D55', 'D65'))
         self.cb_0r11.SetSelection(1)
         self.cb_0r12 = wx.Choice(self, choices=('2°', '10°'))
@@ -661,7 +663,7 @@ CSV files (*.csv;*.txt;*.tsv)|*.csv;*.txt;*.tsv|PDF file (*.pdf)|*.pdf'
 
         try:
             hue_hea_b = choose.result
-            hue = CIE(spe, si, self.cb_0r12.GetSelection() * 8 + 2).yanse()
+            hue = CIE(spe, si, self.cb_0r12.GetSelection() * 8 + 2).colour()
             # hea_ = [hue_hea[i] for i, v in enumerate(hue_hea_b) if v]
             hue_ = c_[CHECKBOX_LABEL+['YI'], hue][list(hue_hea_b.values())]
             self.hue: ndarray[str] = vstack([header, hue_])
