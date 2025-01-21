@@ -4,7 +4,7 @@ CIE data
 """
 from numpy import array
 
-aSIValue = ('A', 'D65', 'C', 'D50', 'D55', 'D75')
+aSIKeys = ('A', 'D65', 'C', 'D50', 'D55', 'D75')
 aWhitePoint = array((
     (
         (109.85, 95.04, 98.07, 96.42, 95.68, 94.97),
@@ -1265,3 +1265,17 @@ axyzL = array((
         (780, 3.30E-05, 1.30E-05, 0)
     )
 ))
+
+
+if __name__ == '__main__':
+    from numpy import savez
+    savez('cie_data.npz',
+          aSIKeys=array(aSIKeys),
+          aWhitePoint=aWhitePoint,
+          Mrgb=Mrgb,
+          Mrgb2=Mrgb2,
+          aWhitePointHunter=aWhitePointHunter,
+          aKabHunter=aKabHunter,
+          aStandardIlluminant=aStandardIlluminant,
+          axyzL=axyzL)
+    print('\n* over *')

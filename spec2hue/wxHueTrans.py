@@ -9,11 +9,11 @@ from numpy import array, concatenate, float64, ndarray
 class CIEHueTransform(CIEHueTransform):
 
     def yanse(self, xyz: ndarray):
-        lab = self._xyz2lab(xyz)
-        hlab = self._xyz2lab_h(xyz)
+        lab = self.xyz2lab(xyz)
+        hlab = self.xyz2lab_h(xyz)
         xy_ = self.xyz2yxy(xyz)[1:]
-        uv_ = self._xyz2yuv(xyz)[1:]
-        luv = self._xyz2luv(xyz)
+        uv_ = self.xyz2yuv(xyz)[1:]
+        luv = self.xyz2luv(xyz)
         ch1 = self.chs(lab)[:2]
         chh = self.chs(hlab)[:2]
         chs2 = self.chs(luv)

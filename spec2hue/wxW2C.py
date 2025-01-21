@@ -101,14 +101,14 @@ def read_pdf(path: str, data_ye: int = 0) -> List[List[str]]:
 class CIE(CIE):
 
     def colour(self):
-        XYZ = self.spe2xyz()
+        XYZ = self.spec2xyz()
         if XYZ.ndim == 1:
-            XYZ = XYZ.reshape((3, 1))
-        lab = self._xyz2lab(XYZ)
-        hlab = self._xyz2lab_h(XYZ)
-        rgb = self._xyz2rgb(XYZ)
-        uv_ = self._xyz2yuv(XYZ)[1:]
-        luv = self._xyz2luv(XYZ)
+            XYZ = XYZ[:, None]
+        lab = self.xyz2lab(XYZ)
+        hlab = self.xyz2lab_h(XYZ)
+        rgb = self.xyz2rgb(XYZ)
+        uv_ = self.xyz2yuv(XYZ)[1:]
+        luv = self.xyz2luv(XYZ)
         # rgb16_ = self.rgb16(rgb, 1)
         xyz = XYZ / XYZ.sum(axis=0)
         # uvw_ = np.asarray([*uv_, 1 - uv_.sum(axis=0)])
