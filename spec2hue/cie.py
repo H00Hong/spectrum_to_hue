@@ -167,8 +167,8 @@ class CIEHueTransform:
         return asarray((xyz[1], *temp))
 
     def xyz2luv(self, xyz: ndarray) -> NDArray[float64]:
-        uv = self._xyz2yuv(xyz)[1:]
-        uvn = self._xyz2yuv(self._wp[xyz.ndim - 1])[1:]
+        uv = self.xyz2yuv(xyz)[1:]
+        uvn = self.xyz2yuv(self._wp[xyz.ndim - 1])[1:]
         L = _ff(xyz[1] / 100) * 116 - 16
         u, v = 13 * L * (uv - uvn)
         return asarray((L, u, v))
@@ -206,7 +206,7 @@ class CIEHueTransform:
         return asarray((x0, y0, z0)) * self._wp_h[lab_h.ndim - 1]
 
     def luv2xyz(self, luv: ndarray) -> NDArray[float64]:
-        uvn = self._xyz2yuv(self._wp[luv.ndim - 1])[1:]
+        uvn = self.xyz2yuv(self._wp[luv.ndim - 1])[1:]
         L = luv[0]
         u_, v_ = luv[1:] / 13 / L + uvn
         Y = _ff_((L + 16) / 116) * 100

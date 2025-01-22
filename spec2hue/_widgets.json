@@ -1,0 +1,113 @@
+{
+    "main": {
+        "tab1": "色度计算",
+        "tab2": "色度转换"
+    },
+    "spec2hue": {
+        "left": {
+            "0_label_input": {
+                "label": "输入"
+            },
+            "0_label_none1": {
+                "label": ""
+            },
+            "0_button_instructions": {
+                "label": "操作说明"
+            },
+            "1_button_select": {
+                "label": "选择文件"
+            },
+            "1_text_import": {
+                "value": ""
+            },
+            "1_button_import": {
+                "label": " 导  入 "
+            },
+            "2_label_spectrum": {
+                "label": "光谱"
+            },
+            "2_line_1": {
+                "style": "h"
+            },
+            "3_GridWithHeader_spectrum": {
+                "subject": "(20, 3)"
+            },
+            "4_label_none2": {
+                "label": ""
+            },
+            "4_label_wavelength.unit": {
+                "label": "波长单位"
+            },
+            "4_choice_wavelength.unit": {
+                "choices": [
+                    "nm",
+                    "μm"
+                ]
+            },
+            "4_label_spectrum.upper": {
+                "label": "光谱上限"
+            },
+            "4_choice_spectrum.upper": {
+                "choices": [
+                    "1",
+                    "100"
+                ]
+            }
+        },
+        "right": {
+            "0_label_output": {
+                "label": "输出"
+            },
+            "1_label_si": {
+                "label": "光源参数: "
+            },
+            "1_choice_si": {
+                "choices": [
+                    "A",
+                    "D65",
+                    "C",
+                    "D50",
+                    "D55",
+                    "D75"
+                ]
+            },
+            "1_choice_vi": {
+                "choices": [
+                    "2°",
+                    "10°"
+                ]
+            },
+            "1_line_2": {
+                "style": "v"
+            },
+            "1_label_none3": {
+                "label": ""
+            },
+            "1_button_calculate": {
+                "label": "计 算"
+            },
+            "2_label_calculate": {
+                "label": "计算输出"
+            },
+            "2_line_3": {
+                "style": "h"
+            },
+            "3_Grid_output": {
+                "read_only": true
+            },
+            "4_label_none4": {
+                "label": ""
+            },
+            "4_button_save": {
+                "label": "导 出"
+            }
+        }
+    },
+    "huetrans": {
+        "label_si": "光源",
+        "label_vi": "视场角",
+        "box_in": "输入",
+        "box_out": "输出",
+        "button": "转  换"
+    }
+}
