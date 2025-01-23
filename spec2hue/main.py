@@ -24,7 +24,7 @@ class MainWin(wx.Frame):
         notebook = wx.Notebook(self)
         notebook.SetFont(
             wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                    wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei'))
+                    wx.FONTWEIGHT_NORMAL, False, WIDGETS_LABEL['font']))
         # 创建第一个Tab页
         self.tab1 = spec2hue.Spec2Hue(notebook)
         # 创建第二个Tab页

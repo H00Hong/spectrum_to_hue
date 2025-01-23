@@ -1,9 +1,23 @@
 {
     "main": {
+        "font": "Microsoft Yahei",
         "tab1": "色度计算",
         "tab2": "色度转换"
     },
+    "readdata": {
+        "font": "Microsoft Yahei",
+        "title": "确认导入参数",
+        "r0": "请确认",
+        "r1": "导入文件:",
+        "r3_pdf": "确认数据横跨了几页",
+        "r3_table0": "请确认 表头/名称在第几行\n  0表示没有",
+        "r3_table1": "确认导入数据在哪个数据表",
+        "r3_table2": "确认导入数据波长在第几列",
+        "message_ok": "导入完成",
+        "message_cancel": "导入取消"
+    },
     "spec2hue": {
+        "font": "Microsoft Yahei",
         "left": {
             "0_label_input": {
                 "label": "输入"
@@ -71,7 +85,7 @@
                     "D75"
                 ]
             },
-            "1_choice_vi": {
+            "1_choice_va": {
                 "choices": [
                     "2°",
                     "10°"
@@ -101,11 +115,13 @@
             "4_button_save": {
                 "label": "导 出"
             }
-        }
+        },
+        "CalcItems_title": "选择计算项目"
     },
     "huetrans": {
+        "font": "Microsoft Yahei",
         "label_si": "光源",
-        "label_vi": "视场角",
+        "label_va": "视场角",
         "box_in": "输入",
         "box_out": "输出",
         "button": "转  换"

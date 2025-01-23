@@ -55,7 +55,7 @@ class HueTrans(wx.Panel):
         self.box_in = wx.StaticBox(self, label=WIDGETS_LABEL['box_in'])
         # 输入
         self.lab_l00 = wx.StaticText(self, label=WIDGETS_LABEL['label_si'])
-        self.lab_l01 = wx.StaticText(self, label=WIDGETS_LABEL['label_vi'])
+        self.lab_l01 = wx.StaticText(self, label=WIDGETS_LABEL['label_va'])
         self.cb_si = wx.Choice(self,
                                choices=('A', 'D65', 'C', 'D50', 'D55', 'D65'))
         self.cb_vi = wx.Choice(self, choices=('2°', '10°'))
@@ -125,9 +125,9 @@ class HueTrans(wx.Panel):
 
     def _set_font(self):
         FONT0 = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                        wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei')
+                        wx.FONTWEIGHT_NORMAL, False, WIDGETS_LABEL['font'])
         FONT1 = wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                        wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei')
+                        wx.FONTWEIGHT_NORMAL, False, WIDGETS_LABEL['font'])
         for i in self.labs:
             i.SetFont(FONT0)
         for i in self.le_input:

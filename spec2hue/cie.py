@@ -40,47 +40,10 @@ class CIEHueTransform:
 
     Parameters
     ----------
-    SI : {'A','D65','C','D50','D55','D75'}, default 'D65'
+    si : {'A','D65','C','D50','D55','D75'}, default 'D65'
         The Standard Illuminant, {'A', 'D65', 'C', 'D50', 'D55', 'D75'}, default: 'D65'.
-    vi : {2, 10}, default 2
+    va : {2, 10}, default 2
         The Viewing Angle, {2, 10}, default: 2.
-
-    Methods
-    -------
-    xyz2lab(XYZ):
-        CIE XYZ to CIE 1976(L*a*b*)colour space
-    xyz2lab_h(XYZ):
-        CIE XYZ to HunterLab
-    xyz2yuv(XYZ):
-        CIE XYZ to CIE Yu'v'
-    xyz2yxy(XYZ):
-        CIE XYZ to CIE Yxy
-    xyz2luv(XYZ):
-        CIE XYZ to CIE 1976 (L*u*v*) colour space
-    xyz2rgb(XYZ):
-        CIE XYZ to sRGB
-    lab2xyz(Lab):
-        CIE 1976 (L*a*b*) colour space to CIE XYZ
-    lab_h2xyz(Lab):
-        HunterLab to CIE XYZ
-    yuv2xyz(Yuv):
-        CIE Yu'v' to CIE XYZ
-    yxy2xyz(Yxy):
-        CIE Yxy to CIE XYZ
-    luv2xyz(Luv):
-        CIE 1976 (L*u*v*) colour space to CIE XYZ
-    rgb2xyz(sRGB):
-        sRGB to CIE XYZ
-    chs(Lab|Luv):
-        CIE 1976 (L*a*b*)|(L*u*v*) colour space to Chs
-    lab2rgb(Lab):
-        CIE 1976 (L*a*b*) colour space to sRGB
-    rgb2lab(sRGB):
-        sRGB to CIE 1976 (L*a*b*) colour space
-    rgb16(sRGB):
-        sRGB to 16-sRGB
-    rbg16_(16-sRGB):
-        16-sRGB to sRGB
     """
 
     _wp: Tuple[NDArray[float64], NDArray[float64]]
@@ -90,29 +53,29 @@ class CIEHueTransform:
     def __init__(self,
                  si: Literal['A', 'D65', 'C', 'D50', 'D55', 'D75',
                              'a', 'd65', 'c', 'd50', 'd55', 'd75'] = 'D65',
-                 vi: Literal[2, 10] = 2):
+                 va: Literal[2, 10] = 2):
         if not isinstance(si, str):
             raise TypeError(f'{self.__class__}: 光源输入类型错误, 请输入字符串')
         si = si.upper()
         if si not in aSIKeys:
             raise ValueError(f'{self.__class__}: 光源种类错误')
-        if vi != 2 and vi != 10:
+        if va != 2 and va != 10:
             raise ValueError(f'{self.__class__}: 视场角错误')
 
-        self.info = {'SI': si, 'VI': vi}
+        self.info = {'SI': si, 'VA': va}
         si_v = self._get_si()
-        vi_v = self._get_vi()
-        wp = aWhitePoint[vi_v, :, si_v]
-        wp_h = aWhitePointHunter[vi_v, :, si_v]
+        va_v = self._get_va()
+        wp = aWhitePoint[va_v, :, si_v]
+        wp_h = aWhitePointHunter[va_v, :, si_v]
         self._wp = (wp, wp[:, None])
         self._wp_h = (wp_h, wp_h[:, None])
-        self._kab: NDArray[float64] = aKabHunter[vi_v, :, si_v]
+        self._kab: NDArray[float64] = aKabHunter[va_v, :, si_v]
 
     def _get_si(self) -> int:
         return aSIKeys.index(self.info['SI'])
 
-    def _get_vi(self) -> int:
-        return (self.info['VI'] - 2) // 8
+    def _get_va(self) -> int:
+        return (self.info['VA'] - 2) // 8
 
     def xyz2lab(self, xyz: ndarray) -> NDArray[float64]:
         """
@@ -319,68 +282,16 @@ class CIE(CIEHueTransform):
 
     Parameters
     ----------
-    spec : ndarray or list or tuple or DataFrame or Series or dict
-        The spectrum, 2-dim matrix or dict.
-        If `spec` is dict, `spec` must contain 'wavelength' and 'spec'
-    SI : {'D65', 'A', 'C', 'D50', 'D55', 'D75'}, default 'D65'
+    spec : ndarray or list or tuple
+        The spectrum, 2-dim matrix.
+    si : {'D65', 'A', 'C', 'D50', 'D55', 'D75'}, default 'D65'
         The Standard Illuminant, {'A', 'D65', 'C', 'D50', 'D55', 'D75'} not case-sensitive, default: 'D65'.
-    vi : {2, 10}, default 2
+    va : {2, 10}, default 2
         The Viewing Angle, {2, 10}, default: 2.
     unit : {'nm', 'um', 'μm'}, default 'nm'
         The wavelength unit of the spectrum, {'nm', 'um', 'μm'}, default: 'nm'.
     upper : {1, 100}, default 100
         The upper limit of the spectrum, {1, 100}, default: 100.
-
-    Methods
-    -------
-    spec2xyz():
-        spectrum to CIE XYZ
-    spec2yxy():
-        spectrum to CIE Yxy
-    spec2yuv():
-        spectrum to CIE Yuv
-    spec2lab():
-        spectrum to CIE 1976 (L*a*b*) colour space
-    spec2lab_h():
-        spectrum to HunterLab
-    spec2luv():
-        spectrum to CIE 1976 (L*u*v*) colour space
-    spec2rgb():
-        spectrum to sRGB
-    xyz2lab(XYZ):
-        CIE XYZ to CIE 1976(L*a*b*)colour space
-    xyz2lab_h(XYZ):
-        CIE XYZ to HunterLab
-    xyz2yuv(XYZ):
-        CIE XYZ to CIE Yu'v'
-    xyz2yxy(XYZ):
-        CIE XYZ to CIE Yxy
-    xyz2luv(XYZ):
-        CIE XYZ to CIE 1976 (L*u*v*) colour space
-    xyz2rgb(XYZ):
-        CIE XYZ to sRGB
-    lab2xyz(Lab):
-        CIE 1976 (L*a*b*) colour space to CIE XYZ
-    lab_h2xyz(Lab):
-        HunterLab to CIE XYZ
-    yuv2xyz(Yuv):
-        CIE Yu'v' to CIE XYZ
-    yxy2xyz(Yxy):
-        CIE Yxy to CIE XYZ
-    luv2xyz(Luv):
-        CIE 1976 (L*u*v*) colour space to CIE XYZ
-    rgb2xyz(sRGB):
-        sRGB to CIE XYZ
-    chs(Lab|Luv):
-        CIE 1976 (L*a*b*)|(L*u*v*) colour space to Chs
-    lab2rgb(Lab):
-        CIE 1976 (L*a*b*) colour space to sRGB
-    rgb2lab(sRGB):
-        sRGB to CIE 1976 (L*a*b*) colour space
-    rgb16(sRGB):
-        sRGB to 16-sRGB
-    rbg16_(16-sRGB):
-        16-sRGB to sRGB
     """
 
     __slots__ = ['spec', 'si0', 'xyzl0', 'sxyzl', 'spec_interp']
@@ -388,10 +299,10 @@ class CIE(CIEHueTransform):
     def __init__(self, spec: Union[ndarray, list, tuple],
                  si: Literal['A', 'D65', 'C', 'D50', 'D55', 'D75',
                              'a', 'd65', 'c', 'd50', 'd55', 'd75'] = 'D65',
-                 vi: Literal[2, 10] = 2,
+                 va: Literal[2, 10] = 2,
                  unit: Literal['nm', 'um', 'μm'] = 'nm',
                  upper: Literal[1, 100] = 100):
-        super().__init__(si, vi)
+        super().__init__(si, va)
         if isinstance(spec, (ndarray, list, tuple)):
             spec = asarray(spec)
             spec = spec[spec[:, 0].argsort()]
@@ -434,10 +345,10 @@ class CIE(CIEHueTransform):
         self.info['item_number'] = spec.shape[-1]
         w1 = arange(wn, wm+step, step, int)
 
-        self.spec: NDArray[float64] = spec if all(w1 == w0) else self.spec_interp(w1)
+        self.spec: NDArray[float64] = self.spec_interp(w1)
         w1 -= 380
         self.si0: NDArray[float64] = aStandardIlluminant[w1, 1 + self._get_si()]
-        self.xyzl0: NDArray[float64] = axyzL[self._get_vi(), w1, 1:].T
+        self.xyzl0: NDArray[float64] = axyzL[self._get_va(), w1, 1:].T
         self.sxyzl: NDArray[float64] = self.si0 * self.xyzl0
 
     def spec2xyz(self) -> NDArray[float64]:
@@ -448,24 +359,24 @@ class CIE(CIEHueTransform):
 
     def spec2yxy(self) -> NDArray[float64]:
         """spectrum to CIE Yxy."""
-        return self._xyz2yxy(self.spec2xyz())
+        return self.xyz2yxy(self.spec2xyz())
 
     def spec2yuv(self) -> NDArray[float64]:
         """spectrum to CIE Yuv."""
-        return self._xyz2yuv(self.spec2xyz())
+        return self.xyz2yuv(self.spec2xyz())
 
     def spec2lab(self) -> NDArray[float64]:
         """spectrum to CIELAB."""
-        return self._xyz2lab(self.spec2xyz())
+        return self.xyz2lab(self.spec2xyz())
 
     def spec2lab_h(self) -> NDArray[float64]:
         """spectrum to HunterLAB."""
-        return self._xyz2lab_h(self.spec2xyz())
+        return self.xyz2lab_h(self.spec2xyz())
 
     def spec2luv(self) -> NDArray[float64]:
         """spectrum to CIELUV."""
-        return self._xyz2luv(self.spec2xyz())
+        return self.xyz2luv(self.spec2xyz())
 
     def spec2rgb(self) -> NDArray[float64]:
         """spectrum to sRGB."""
-        return self._xyz2rgb(self.spec2xyz())
+        return self.xyz2rgb(self.spec2xyz())

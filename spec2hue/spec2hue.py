@@ -4,12 +4,9 @@ import os.path
 from typing import Dict, List, Union
 
 import about
-import openpyxl
-import pdfplumber
 import wx
-import xlrd
-from _base import (WIDGETS_TOTAL, line, line_h, line_v, get_setting,
-                   read_pdf, read_txt, save_setting)
+from _base import (WIDGETS_TOTAL, line, line_h, line_v, load_setting,
+                   save_setting, ReadFileData)
 from cie import CIE
 from mywxwidgets.grid.gridnumpy import Grid, GridWithHeader
 from numpy import array, c_, ndarray, vstack
@@ -49,28 +46,41 @@ CHECKBOX_LABEL = ['X', 'Y', 'Z', 'x', 'y', 'z', 'L*', 'a*', 'b*', 'C*_ab',
 #                  False, False, False, False, False, False, False, True, False,
 #                  False, False, False, False, False, False, False, False)
 CHECKBOX_DICT = dict(zip(CHECKBOX_TITLE, CHECKBOX_LABEL))
+WIDGETS_LABEL = WIDGETS_TOTAL['spec2hue']
+MAP_L2W = {
+    'label': wx.StaticText,
+    'button': wx.Button,
+    'text': wx.TextCtrl,
+    'choice': wx.Choice,
+    'GridWithHeader': GridWithHeader,
+    'Grid': Grid,
+    'line': line
+}
 
 
 class CalcItems(wx.Dialog):
 
     def __init__(self, parent, c: bool) -> None:
         super(CalcItems, self).__init__(parent,
-                                        title='选择计算项目',
+                                        style=wx.CAPTION | wx.CLOSE_BOX
+                                        | wx.RESIZE_BORDER,
+                                        title=WIDGETS_LABEL['CalcItems_title'],
                                         size=(600, 600))
-        self.setting = get_setting()
+        self.setting = load_setting()
         self._c = c
         self._init_ui()
         self.Centre()
 
     def _init_ui(self):
-        self.lab3 = wx.StaticText(self, label='CIE XYZ')
-        self.lab6 = wx.StaticText(self, label='CIE xyz')
-        self.lab9 = wx.StaticText(self, label='CIELAB')
-        self.lab12 = wx.StaticText(self, label='Hunter Lab')
-        self.lab17 = wx.StaticText(self, label='CIE u\'v\'w\'')
-        self.lab20 = wx.StaticText(self, label='CIELUV')
-        self.btn231 = wx.Button(self, label='确定')
-        self.btn232 = wx.Button(self, label='取消')
+        self.labs = (
+            wx.StaticText(self, label='CIE XYZ'), 
+            wx.StaticText(self, label='CIE xyz'), 
+            wx.StaticText(self, label='CIE u\'v\'w\''), 
+            wx.StaticText(self, label='CIELAB'), 
+            wx.StaticText(self, label='Hunter Lab'),
+            wx.StaticText(self, label='CIELUV'))
+        self.btn1 = wx.Button(self, label='确定')
+        self.btn2 = wx.Button(self, label='取消')
 
         self.check_boxs = {
             k: wx.CheckBox(self, label=l)
@@ -84,8 +94,8 @@ class CalcItems(wx.Dialog):
         self._set_font()
         self._laypout_0()
 
-        self.Bind(wx.EVT_BUTTON, self._on_ok, self.btn231)
-        self.Bind(wx.EVT_BUTTON, self._on_cancel, self.btn232)
+        self.Bind(wx.EVT_BUTTON, self._on_ok, self.btn1)
+        self.Bind(wx.EVT_BUTTON, self._on_cancel, self.btn2)
 
     def _on_ok(self, event):
         self.result: Dict[str, bool] = {}
@@ -110,7 +120,7 @@ class CalcItems(wx.Dialog):
         layout11.Add(line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
         for lab, cb_t in zip(
-            (self.lab3, self.lab6, self.lab17),
+            self.labs[:3],
             (('X', 'Y', 'Z'), ('x', 'y', 'z'), ('u\'', 'v\'', 'w\''))):
             layout10.Add(lab, 0, wx.ALL, 3)
             layout = wx.BoxSizer(wx.HORIZONTAL)
@@ -120,7 +130,7 @@ class CalcItems(wx.Dialog):
             layout10.Add(line_h(self), 0, wx.EXPAND | wx.ALL, 3)
 
         for lab, cb_t in zip(
-            (self.lab9, self.lab12, self.lab20),
+            self.labs[3:],
             (('CIELAB-L*', 'CIELAB-a*', 'CIELAB-b*', 'CIELAB-C*_ab',
               'CIELAB-h_ab'), ('Hunter L', 'Hunter a', 'Hunter b',
                                'Hunter C_ab', 'Hunter h_ab'),
@@ -154,211 +164,24 @@ class CalcItems(wx.Dialog):
 
         layout1 = wx.BoxSizer(wx.HORIZONTAL)
         layout1.Add(wx.StaticText(self), 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout1.Add(self.btn231, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout1.Add(self.btn232, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
+        layout1.Add(self.btn1, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
+        layout1.Add(self.btn2, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
         layout0.Add(layout1, 0, wx.EXPAND | wx.ALL, 3)
         self.SetSizer(layout0)
 
     def _set_font(self):
         FONT0 = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                        wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei')
+                        wx.FONTWEIGHT_NORMAL, False, WIDGETS_LABEL['font'])
         self.SetFont(FONT0)
         # self.lab0.SetFont(FONT0)
-        self.lab3.SetFont(FONT0)
-        self.lab6.SetFont(FONT0)
-        self.lab9.SetFont(FONT0)
-        self.lab12.SetFont(FONT0)
-        self.lab17.SetFont(FONT0)
-        self.lab20.SetFont(FONT0)
+        for lab in self.labs:
+            lab.SetFont(FONT0)
         for v in self.check_boxs.values():
             v.SetFont(FONT0)
-        self.btn231.SetFont(FONT0)
-        self.btn232.SetFont(FONT0)
+        self.btn1.SetFont(FONT0)
+        self.btn2.SetFont(FONT0)
         if self._c:
             self.cb_yi.SetFont(FONT0)
-
-
-class ReadFileData(wx.Dialog):
-
-    def __init__(self, parent, path: str, grid: GridWithHeader):
-        super(ReadFileData, self).__init__(parent, title='确认导入参数')
-        self._path, self._grid = path, grid
-        self.setting = get_setting()
-        self.FONT0 = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                             wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei')
-        self._suffix = self._path.rpartition('.')[-1].lower()
-        self._init_ui()
-        if self._suffix == 'pdf':
-            self._init_ui_0()
-        else:
-            self._init_ui_1()
-
-    def _add_line_h(self):
-        self.layout0.Add(line_h(self), 0, wx.ALL | wx.EXPAND, 3)
-
-    def _init_ui(self):
-        self.lab0 = wx.StaticText(self, label='请确认')
-        self.lab1 = wx.StaticText(self, label='导入文件:')
-        self.lab2 = wx.StaticText(self, label=self._path)
-        self.lab3_00 = wx.StaticText(self, label='')
-        self.sc3_10 = wx.SpinCtrl(self)
-
-        self.lab_none = wx.StaticText(self, label='')
-        self.btn_ok = wx.Button(self, label='确认')
-        self.btn_cancel = wx.Button(self, label='取消')
-
-        self.lab0.SetFont(self.FONT0)
-        self.lab1.SetFont(self.FONT0)
-        self.lab2.SetFont(self.FONT0)
-        self.lab3_00.SetFont(self.FONT0)
-        self.sc3_10.SetFont(self.FONT0)
-        self.btn_ok.SetFont(self.FONT0)
-        self.btn_cancel.SetFont(self.FONT0)
-
-        self.layout0 = wx.BoxSizer(wx.VERTICAL)
-        self.layout0.Add(self.lab0, 0, wx.ALL, 3)
-        self._add_line_h()
-        self.layout0.Add(self.lab1, 0, wx.ALL, 3)
-        self.layout0.Add(self.lab2, 1, wx.ALL | wx.EXPAND, 3)
-        self._add_line_h()
-
-        self.layout1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.layout1.Add(self.lab_none, 1, wx.ALL | wx.EXPAND, 3)
-        self.layout1.Add(self.btn_ok, 0, wx.ALL | wx.EXPAND, 3)
-        self.layout1.Add(self.btn_cancel, 0, wx.ALL | wx.EXPAND, 3)
-
-        self.Bind(wx.EVT_BUTTON, self._on_ok, self.btn_ok)
-        self.Bind(wx.EVT_BUTTON, self._on_cancel, self.btn_cancel)
-
-    def _init_ui_1(self):
-        self.lab3_00.SetLabel('请确认 表头/名称在第几行\n  0表示没有')
-        self.lab3_10 = wx.StaticText(self, label='确认导入数据在哪个数据表')
-        self.lab3_20 = wx.StaticText(self, label='确认导入数据波长在第几列')
-
-        if self._suffix in ('csv', 'txt'):
-            xl1 = [self._path.rpartition('/')[-1][:-4]] # 读取文件名
-        elif self._suffix == 'xlsx':
-            # 读取Excel的sheetname
-            wb = openpyxl.load_workbook(self._path)
-            xl1 = wb.sheetnames
-        else:
-            wb = xlrd.open_workbook(self._path)
-            xl1 = wb.sheet_names()
-
-        self.cb3_11 = wx.Choice(self, choices=xl1)
-        self.cb3_11.SetSelection(0)
-        self.sc3_12 = wx.SpinCtrl(self, min=1)
-
-        self.sc3_10.SetValue(self.setting['header_row'])
-        self.sc3_12.SetValue(self.setting['wavelength_col'])
-
-        self.lab3_10.SetFont(self.FONT0)
-        self.lab3_20.SetFont(self.FONT0)
-        self.cb3_11.SetFont(self.FONT0)
-        self.sc3_12.SetFont(self.FONT0)
-
-        layout2 = wx.GridSizer(0, 2, 0, 0)
-        layout2.Add(self.lab3_00, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout2.Add(self.sc3_10, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout2.Add(self.lab3_10, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout2.Add(self.cb3_11, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout2.Add(self.lab3_20, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout2.Add(self.sc3_12, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, 3)
-
-        self.layout0.Add(layout2, 0, wx.ALL | wx.EXPAND, 3)
-        self._add_line_h()
-        self.layout0.Add(self.layout1, 0, wx.ALL | wx.EXPAND, 3)
-        self.SetSizer(self.layout0)
-
-        self.SetSize((500, 410))
-
-    def _init_ui_0(self):
-        self.lab3_00.SetLabel('确认数据横跨了几页')
-        self.sc3_10.SetMax(len(pdfplumber.open(self._path).pages) - 1)
-        self.sc3_10.SetValue(self.setting['pdf_page'])
-
-        layout2 = wx.BoxSizer(wx.HORIZONTAL)
-        layout2.Add(self.lab3_00, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
-        layout2.Add(self.sc3_10, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 3)
-        self.layout0.Add(layout2, 0, wx.ALL | wx.EXPAND, 3)
-        self._add_line_h()
-        self.layout0.Add(self.layout1, 0, wx.ALL | wx.EXPAND, 3)
-        self.SetSizer(self.layout0)
-
-        self.SetSize((300, 310))
-
-    def _on_ok(self, event):
-        if self._suffix == 'pdf':
-            self.setting['pdf_page'] = self.sc3_10.GetValue()
-        else:
-            self.setting['header_row'] = self.sc3_10.GetValue()
-            self.setting['wavelength_col'] = self.sc3_12.GetValue()
-        save_setting(self.setting)
-        self._read_data()
-        wx.LogMessage('导入完成')
-        self.EndModal(wx.ID_OK)
-
-    def _read_data(self):
-        ind1 = int(self.sc3_10.GetValue())  # 读取pdf的几页 or 读取Excel的第几行
-        if self._suffix == 'pdf':
-            spe = read_pdf(self._path, ind1)
-            hea = ['波长'] + [f'Data{i}' for i in range(1, len(spe[0]))]
-        else:
-            ind2 = self.cb3_11.GetStringSelection()  # 读取Excel的sheetname
-            ind3 = int(self.sc3_12.GetValue()) - 1  # 读取Excel的第几列
-            ind1_0 = None if ind1 == 0 else ind1 - 1
-            if self._suffix in ('csv', 'txt', 'tsv'):
-                spe, hea = read_txt(self._path, ind1_0, slice(ind3, None))
-
-            elif self._suffix == 'xlsx':
-                wb1 = openpyxl.load_workbook(self._path)
-                ws1 = wb1[ind2]
-                spe: List[List[str]] = list(
-                    map(list,
-                        ws1.iter_rows(min_row=ind1,
-                                      min_col=ind3 + 1,
-                                      values_only=True)))
-
-                if ind1_0 is not None:
-                    hea = spe.pop(0)
-
-            else:
-                wb2: xlrd.book.Book = xlrd.open_workbook(self._path)
-                ws2 = wb2.sheet_by_name(ind2)
-                if ind1_0 is not None:
-                    hea = ws2.row_values(ind1_0, start_colx=ind3)
-                spe = [
-                    ws2.row_values(i, start_colx=ind3)
-                    for i in range(ind1, ws2.nrows)
-                ]
-
-            if ind1_0 is None:
-                hea = ['波长'] + [f'Data{i}' for i in range(1, len(spe[0]))]
-            else:
-                if isinstance(hea[0], list):
-                    for i in range(len(hea)):
-                        hea[i][0] = '波长'
-                else:
-                    hea[0] = '波长'
-
-        self._grid.SetSubject(spe)
-        self._grid.SetHeader([hea])
-
-    def _on_cancel(self, event):
-        wx.LogMessage('导入取消')
-        self.EndModal(wx.ID_CANCEL)
-
-
-WIDGETS_LABEL = WIDGETS_TOTAL['spec2hue']
-MAP_L2W = {
-    'label': wx.StaticText,
-    'button': wx.Button,
-    'text': wx.TextCtrl,
-    'choice': wx.Choice,
-    'GridWithHeader': GridWithHeader,
-    'Grid': Grid,
-    'line': line
-}
 
 
 class Spec2Hue(wx.Panel):
@@ -401,7 +224,7 @@ class Spec2Hue(wx.Panel):
         self.widgets['choice_wavelength.unit'].SetSelection(0)
         self.widgets['choice_spectrum.upper'].SetSelection(1)
         self.widgets['choice_si'].SetSelection(1)
-        self.widgets['choice_vi'].SetSelection(0)
+        self.widgets['choice_va'].SetSelection(0)
         self.grid_out: Grid = self.widgets['Grid_output']
         self.grid_out.HideRowLabels()
         self.grid_out.HideColLabels()
@@ -452,11 +275,11 @@ class Spec2Hue(wx.Panel):
 
     def _set_font(self):
         FONT0 = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                        wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei')
+                        wx.FONTWEIGHT_NORMAL, False, WIDGETS_LABEL['font'])
         FONT1 = wx.Font(16, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                        wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei')
+                        wx.FONTWEIGHT_NORMAL, False, WIDGETS_LABEL['font'])
         FONT2 = wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-                        wx.FONTWEIGHT_NORMAL, False, 'Microsoft Yahei')
+                        wx.FONTWEIGHT_NORMAL, False, WIDGETS_LABEL['font'])
 
         for v in self.widgets.values():
             v.SetFont(FONT0)
@@ -488,7 +311,7 @@ class Spec2Hue(wx.Panel):
     def _on_btn_filepath(self, event):
         # 选择文件
         try:
-            setting = get_setting()
+            setting = load_setting()
             wildcard = 'Data file (*.xlsx;*.xls;*.csv;*.txt;*.tsv;*.pdf)|*.xlsx;*.xls;*.csv;*.txt;*.tsv;*.pdf|\
 Excel files (*.xlsx;*.xls)|*.xlsx;*.xls|\
 CSV files (*.csv;*.txt;*.tsv)|*.csv;*.txt;*.tsv|PDF file (*.pdf)|*.pdf'
@@ -512,12 +335,14 @@ CSV files (*.csv;*.txt;*.tsv)|*.csv;*.txt;*.tsv|PDF file (*.pdf)|*.pdf'
         # 导入
         try:
             path: str = self.filepath.GetValue().replace('\\', '/')
-            readfile = ReadFileData(self, path, self.grid_in)
+            readfile = ReadFileData(self, path)
             if readfile.ShowModal() != wx.ID_OK:
                 return
+            self.grid_in.SetSubject(readfile.result[0])
+            self.grid_in.SetHeader([readfile.result[1]])
             self.Layout()
 
-            setting = get_setting()
+            setting = load_setting()
             setting['open_path'] = os.path.dirname(path)
             save_setting(setting)
         except Exception as e:
@@ -549,7 +374,7 @@ CSV files (*.csv;*.txt;*.tsv)|*.csv;*.txt;*.tsv|PDF file (*.pdf)|*.pdf'
         try:
             hue_hea_b = choose.result
             hue = CIE(spe, si,
-                      self.widgets['choice_vi'].GetSelection() * 8 + 2,
+                      self.widgets['choice_va'].GetSelection() * 8 + 2,
                       self.widgets['choice_wavelength.unit'].GetStringSelection(),
                       int(self.widgets['choice_spectrum.upper'].GetStringSelection())
                       ).colour()
