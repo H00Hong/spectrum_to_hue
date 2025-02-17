@@ -379,7 +379,7 @@ CSV files (*.csv;*.txt;*.tsv)|*.csv;*.txt;*.tsv|PDF file (*.pdf)|*.pdf'
                       int(self.widgets['choice_spectrum.upper'].GetStringSelection())
                       ).colour()
             # hea_ = [hue_hea[i] for i, v in enumerate(hue_hea_b) if v]
-            hue_ = c_[CHECKBOX_LABEL+['YI'], hue][list(hue_hea_b.values())]
+            hue_ = c_[CHECKBOX_TITLE+['YI'], hue][list(hue_hea_b.values())]
             self.hue: ndarray[str] = vstack([header, hue_])
 
             self.grid_out.SetShowFormat('{:.3f}')
