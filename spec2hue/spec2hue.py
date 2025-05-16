@@ -427,7 +427,7 @@ CSV files (*.csv;*.txt;*.tsv)|*.csv;*.txt;*.tsv|PDF file (*.pdf)|*.pdf'
             self._err(e)
 
     def _err(self, text):
-        wx.MessageBox(text, '警告', wx.OK | wx.ICON_ERROR)
+        wx.MessageBox(str(text), '警告', wx.OK | wx.ICON_ERROR)
 
 
 if __name__ == '__main__':
