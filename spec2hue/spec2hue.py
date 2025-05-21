@@ -1,5 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 import csv
+import json
 import os.path
 from typing import Dict, List, Union
 
@@ -305,7 +306,7 @@ class Spec2Hue(wx.Panel):
 
     def _on_btn_instructions(self, event):
         # 操作说明
-        win = about.AboutWin(self)
+        win = about.AboutWin(self, '说明')
         win.Show()
 
     def _on_btn_filepath(self, event):

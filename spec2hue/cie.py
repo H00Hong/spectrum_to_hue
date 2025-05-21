@@ -8,7 +8,7 @@ from cie_data import (Mrgb, Mrgb2, aKabHunter, aStandardIlluminant,
                       aWhitePoint, aWhitePointHunter, axyzL)
 from interpolate import interp1d
 from numpy import (arange, arctan2, asarray, c_, ceil, clip, diff, float64,
-                   floor, nan_to_num, ndarray, pi, sqrt, all)
+                   floor, nan_to_num, ndarray, pi, sqrt, any)
 from numpy.typing import NDArray
 
 aSIKeys = ('A', 'D65', 'C', 'D50', 'D55', 'D75')
@@ -309,12 +309,14 @@ class CIE(CIEHueTransform):
             w0 = spec[:, 0]
             spec = spec[:, 1:]
         else:
-            raise TypeError(f'{self.__class__}: spec 格式错误')
+            raise TypeError(f'{self.__class__}: 光谱 格式错误')
 
         if upper == 100:
-            assert all(spec <= 100)
+            if any(spec > 100):
+                raise ValueError(f'{self.__class__}: 光谱 中有值超过上限')
         elif upper == 1:
-            assert all(spec <= 1)
+            if any(spec > 1):
+                raise ValueError(f'{self.__class__}: 光谱 中有值超过上限')
             spec = spec * 100
         else:
             raise ValueError(f'{self.__class__}: upper 错误, 请输入 1 或 100')

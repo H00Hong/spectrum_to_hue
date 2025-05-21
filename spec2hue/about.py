@@ -2,6 +2,7 @@
 import json
 
 import wx
+from _base import DIRNAME
 from mywxwidgets.richtextbase import RichTextBase
 
 
@@ -12,7 +13,7 @@ class AboutWin(RichTextBase):
         # red = (255,0,0)
         # blue = (0,0,255)
         # purple = (170,85,255)
-        with open('./_about.json', 'r', encoding='utf-8') as fp:
+        with open(DIRNAME+'/_about.json', 'r', encoding='utf-8') as fp:
             text = json.load(fp)
         keys = sorted(text)
         for i in keys:
